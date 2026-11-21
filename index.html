@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Raj Subway Game — Raj Computers</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #0a0a0a;
+        overflow: hidden;
+        font-family: 'Segoe UI', sans-serif;
+      }
+
+      #game-canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #hud {
+        position: fixed;
+        top: 20px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 30px;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      #hud .stat {
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+
+      /* ── SCREENS ── */
+      .screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+        background: rgba(0,0,0,0.75);
+        color: #fff;
+      }
+
+      .screen.hidden { display: none; }
+
+      .screen h1 {
+        font-size: 3rem;
+        font-weight: 900;
+        letter-spacing: 3px;
+        color: #FFD700;
+        text-shadow: 0 0 20px rgba(255,215,0,0.6);
+        margin-bottom: 8px;
+      }
+
+      .screen p.sub {
+        font-size: 1rem;
+        color: #aaa;
+        margin-bottom: 40px;
+        letter-spacing: 2px;
+      }
+
+      .btn {
+        background: #FFD700;
+        color: #000;
+        border: none;
+        padding: 14px 48px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        border-radius: 50px;
+        cursor: pointer;
+        letter-spacing: 2px;
+        margin: 8px;
+        transition: transform 0.1s, box-shadow 0.1s;
+        box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+      }
+
+      .btn:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(255,215,0,0.6); }
+      .btn:active { transform: scale(0.97); }
+      .btn.secondary { background: #333; color: #fff; box-shadow: none; }
+
+      #score-display {
+        font-size: 1.3rem;
+        margin-bottom: 6px;
+        color: #FFD700;
+      }
+
+      #highscore-display {
+        font-size: 0.95rem;
+        color: #aaa;
+        margin-bottom: 32px;
+      }
+
+      #loading-bar-wrap {
+        width: 260px;
+        height: 8px;
+        background: #333;
+        border-radius: 8px;
+        margin-top: 24px;
+        overflow: hidden;
+      }
+
+      #loading-bar {
+        height: 100%;
+        width: 0%;
+        background: #FFD700;
+        border-radius: 8px;
+        transition: width 0.3s;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD (visible during play) -->
+    <div id="hud">
+      <div class="stat" id="hud-score">SCORE: 0</div>
+      <div class="stat" id="hud-coins">🪙 0</div>
+      <div class="stat" id="hud-hi">BEST: 0</div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="screen-loading" class="screen">
+      <h1>RAJ SUBWAY GAME</h1>
+      <p class="sub">RAJ COMPUTERS</p>
+      <div id="loading-bar-wrap"><div id="loading-bar"></div></div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="screen-menu" class="screen hidden">
+      <h1>RAJ SUBWAY GAME</h1>
+      <p class="sub">BY RAJ COMPUTERS</p>
+      <button class="btn" id="btn-play">▶ PLAY</button>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="screen-pause" class="screen hidden">
+      <h1>PAUSED</h1>
+      <button class="btn" id="btn-resume">▶ RESUME</button>
+      <button class="btn secondary" id="btn-quit">QUIT TO MENU</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="screen-gameover" class="screen hidden">
+      <h1>GAME OVER</h1>
+      <div id="score-display">SCORE: 0</div>
+      <div id="highscore-display">BEST: 0</div>
+      <button class="btn" id="btn-restart">↺ PLAY AGAIN</button>
+      <button class="btn secondary" id="btn-menu">MENU</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
