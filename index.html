@@ -2,167 +2,187 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Raj Subway Game — Raj Computers</title>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+      /* ── Reset ── */
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #0a0a0a; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; touch-action: none; }
+      #game-canvas { display: block; width: 100vw; height: 100vh; }
 
-      body {
-        background: #0a0a0a;
-        overflow: hidden;
-        font-family: 'Segoe UI', sans-serif;
-      }
-
-      #game-canvas {
-        display: block;
-        width: 100vw;
-        height: 100vh;
-      }
-
+      /* ── HUD ── */
       #hud {
-        position: fixed;
-        top: 20px;
-        left: 0;
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        padding: 0 30px;
-        pointer-events: none;
-        z-index: 10;
+        position: fixed; top: 0; left: 0; width: 100%;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 14px 24px; pointer-events: none; z-index: 10;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.45), transparent);
       }
+      .stat {
+        color: #fff; font-size: 0.95rem; font-weight: 700;
+        letter-spacing: 1px; text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+        background: rgba(0,0,0,0.3); padding: 6px 14px; border-radius: 20px;
+      }
+      #hud-coins { color: #FFD700; }
 
-      #hud .stat {
-        background: rgba(0,0,0,0.5);
-        color: #fff;
-        padding: 8px 18px;
-        border-radius: 20px;
-        font-size: 1rem;
-        font-weight: 600;
-        letter-spacing: 1px;
+      /* Speed ribbon */
+      #speed-bar-wrap {
+        position: fixed; bottom: 0; left: 0; width: 100%;
+        height: 4px; background: rgba(255,255,255,0.1); z-index: 10; pointer-events: none;
       }
+      #speed-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#1a73e8,#FFD700); transition: width 0.5s; }
 
       /* ── SCREENS ── */
       .screen {
-        position: fixed;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 20;
-        background: rgba(0,0,0,0.75);
-        color: #fff;
+        position: fixed; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        z-index: 20; color: #fff;
+        background: rgba(0,0,0,0.72);
+        backdrop-filter: blur(6px);
+        transition: opacity 0.3s;
       }
-
       .screen.hidden { display: none; }
 
-      .screen h1 {
-        font-size: 3rem;
-        font-weight: 900;
-        letter-spacing: 3px;
-        color: #FFD700;
-        text-shadow: 0 0 20px rgba(255,215,0,0.6);
-        margin-bottom: 8px;
+      .game-title {
+        font-size: clamp(2rem, 7vw, 3.8rem); font-weight: 900;
+        letter-spacing: 4px; color: #FFD700;
+        text-shadow: 0 0 30px rgba(255,215,0,0.5), 0 2px 0 rgba(0,0,0,0.5);
+        margin-bottom: 4px; text-align: center;
       }
-
-      .screen p.sub {
-        font-size: 1rem;
-        color: #aaa;
-        margin-bottom: 40px;
-        letter-spacing: 2px;
+      .game-sub {
+        font-size: 0.85rem; color: #aaa; letter-spacing: 3px;
+        margin-bottom: 36px; text-align: center;
       }
 
       .btn {
-        background: #FFD700;
-        color: #000;
-        border: none;
-        padding: 14px 48px;
-        font-size: 1.1rem;
-        font-weight: 800;
-        border-radius: 50px;
-        cursor: pointer;
-        letter-spacing: 2px;
-        margin: 8px;
+        background: #FFD700; color: #111; border: none;
+        padding: 14px 52px; font-size: 1.05rem; font-weight: 800;
+        border-radius: 50px; cursor: pointer; letter-spacing: 2px; margin: 7px;
+        box-shadow: 0 4px 24px rgba(255,215,0,0.4);
         transition: transform 0.1s, box-shadow 0.1s;
-        box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+        min-width: 200px;
       }
-
-      .btn:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(255,215,0,0.6); }
+      .btn:hover  { transform: scale(1.05); box-shadow: 0 6px 32px rgba(255,215,0,0.6); }
       .btn:active { transform: scale(0.97); }
-      .btn.secondary { background: #333; color: #fff; box-shadow: none; }
+      .btn.secondary { background: rgba(255,255,255,0.12); color: #fff; box-shadow: none; border: 1px solid rgba(255,255,255,0.2); }
 
-      #score-display {
-        font-size: 1.3rem;
-        margin-bottom: 6px;
-        color: #FFD700;
+      /* Score display on game-over */
+      .final-score { font-size: 1.5rem; font-weight: 700; color: #FFD700; margin-bottom: 4px; }
+      .final-best  { font-size: 0.9rem; color: #aaa; margin-bottom: 28px; }
+
+      /* Loading bar */
+      #loading-bar-wrap { width: 240px; height: 6px; background: #333; border-radius: 6px; margin-top: 20px; overflow: hidden; }
+      #loading-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#1a73e8,#FFD700); border-radius: 6px; transition: width 0.2s; }
+
+      /* Pause icon in corner */
+      #btn-pause-icon {
+        position: fixed; top: 14px; right: 20px;
+        background: rgba(0,0,0,0.3); border: none; color: #fff;
+        font-size: 1.1rem; padding: 6px 12px; border-radius: 20px;
+        cursor: pointer; z-index: 15; letter-spacing: 1px;
       }
 
-      #highscore-display {
-        font-size: 0.95rem;
-        color: #aaa;
-        margin-bottom: 32px;
+      /* Sound toggle */
+      #btn-sound {
+        position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+        background: rgba(0,0,0,0.3); border: none; color: #fff;
+        font-size: 0.85rem; padding: 5px 14px; border-radius: 20px;
+        cursor: pointer; z-index: 15; letter-spacing: 1px;
+        display: none;
       }
 
-      #loading-bar-wrap {
-        width: 260px;
-        height: 8px;
-        background: #333;
-        border-radius: 8px;
-        margin-top: 24px;
-        overflow: hidden;
+      /* ── MOBILE ON-SCREEN CONTROLS ── */
+      #mobile-controls {
+        position: fixed; bottom: 30px; left: 0; width: 100%;
+        display: none; justify-content: space-between; align-items: flex-end;
+        padding: 0 24px; z-index: 12; pointer-events: none;
+      }
+      .ctrl-col { display: flex; flex-direction: column; gap: 10px; pointer-events: all; }
+      .ctrl-btn {
+        width: 68px; height: 68px; border-radius: 50%;
+        background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
+        color: #fff; font-size: 1.5rem; display: flex; align-items: center;
+        justify-content: center; cursor: pointer; user-select: none;
+        backdrop-filter: blur(4px); transition: background 0.1s;
+      }
+      .ctrl-btn:active { background: rgba(255,215,0,0.4); }
+      .ctrl-center { display: flex; gap: 10px; }
+
+      /* Show mobile controls only on touch devices */
+      @media (hover: none) and (pointer: coarse) {
+        #mobile-controls { display: flex; }
+        #btn-sound { display: block; }
       }
 
-      #loading-bar {
-        height: 100%;
-        width: 0%;
-        background: #FFD700;
-        border-radius: 8px;
-        transition: width 0.3s;
+      /* Score pop animation */
+      @keyframes scorePop {
+        0%   { transform: scale(1); }
+        50%  { transform: scale(1.3); color: #FFD700; }
+        100% { transform: scale(1); }
       }
+      .score-pop { animation: scorePop 0.2s ease; }
     </style>
   </head>
   <body>
     <canvas id="game-canvas"></canvas>
 
-    <!-- HUD (visible during play) -->
+    <!-- ── HUD ── -->
     <div id="hud">
       <div class="stat" id="hud-score">SCORE: 0</div>
       <div class="stat" id="hud-coins">🪙 0</div>
       <div class="stat" id="hud-hi">BEST: 0</div>
     </div>
+    <button id="btn-pause-icon" style="display:none">⏸ PAUSE</button>
+    <button id="btn-sound">🔊 SFX</button>
+    <div id="speed-bar-wrap"><div id="speed-bar"></div></div>
 
-    <!-- Loading Screen -->
+    <!-- ── LOADING SCREEN ── -->
     <div id="screen-loading" class="screen">
-      <h1>RAJ SUBWAY GAME</h1>
-      <p class="sub">RAJ COMPUTERS</p>
+      <div class="game-title">RAJ SUBWAY GAME</div>
+      <div class="game-sub">RAJ COMPUTERS</div>
       <div id="loading-bar-wrap"><div id="loading-bar"></div></div>
+      <div style="color:#666;font-size:0.75rem;margin-top:12px;letter-spacing:2px">LOADING…</div>
     </div>
 
-    <!-- Main Menu -->
+    <!-- ── MAIN MENU ── -->
     <div id="screen-menu" class="screen hidden">
-      <h1>RAJ SUBWAY GAME</h1>
-      <p class="sub">BY RAJ COMPUTERS</p>
+      <div class="game-title">RAJ SUBWAY GAME</div>
+      <div class="game-sub">BY RAJ COMPUTERS</div>
       <button class="btn" id="btn-play">▶ PLAY</button>
+      <div style="margin-top:16px;color:#555;font-size:0.75rem;letter-spacing:2px">
+        ARROWS / WASD · SWIPE ON MOBILE
+      </div>
     </div>
 
-    <!-- Pause Screen -->
+    <!-- ── PAUSE ── -->
     <div id="screen-pause" class="screen hidden">
-      <h1>PAUSED</h1>
+      <div class="game-title" style="font-size:2.5rem">⏸ PAUSED</div>
+      <div class="game-sub">GAME IS PAUSED</div>
       <button class="btn" id="btn-resume">▶ RESUME</button>
       <button class="btn secondary" id="btn-quit">QUIT TO MENU</button>
     </div>
 
-    <!-- Game Over Screen -->
+    <!-- ── GAME OVER ── -->
     <div id="screen-gameover" class="screen hidden">
-      <h1>GAME OVER</h1>
-      <div id="score-display">SCORE: 0</div>
-      <div id="highscore-display">BEST: 0</div>
+      <div class="game-title" style="color:#ff4444">GAME OVER</div>
+      <div class="game-sub" style="margin-bottom:12px">YOU CRASHED!</div>
+      <div class="final-score" id="score-display">SCORE: 0</div>
+      <div class="final-best"  id="highscore-display">BEST: 0</div>
       <button class="btn" id="btn-restart">↺ PLAY AGAIN</button>
       <button class="btn secondary" id="btn-menu">MENU</button>
+    </div>
+
+    <!-- ── MOBILE CONTROLS ── -->
+    <div id="mobile-controls">
+      <div class="ctrl-col">
+        <div class="ctrl-btn" id="ctrl-left">◀</div>
+      </div>
+      <div class="ctrl-col" style="align-items:center;gap:10px">
+        <div class="ctrl-btn" id="ctrl-up">▲</div>
+        <div class="ctrl-btn" id="ctrl-down">▼</div>
+      </div>
+      <div class="ctrl-col">
+        <div class="ctrl-btn" id="ctrl-right">▶</div>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>
